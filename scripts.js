@@ -1,6 +1,6 @@
+import { getAllPokemons, getPokemonById, getPokemonSpecies } from "./pokeApi/api.js";
+
 (() => {
-    const apiUrl = "https://pokeapi.co/api/v2/pokemon/";
-    const catalogUrl = `${apiUrl}?limit=151`;
     const nationalDexSize = 1025;
     const byId = (id) => document.getElementById(id);
     const ui = {
@@ -16,6 +16,8 @@
         weight: byId("pokemon-weight"),
         stats: byId("pokemon-stats"),
         abilities: byId("pokemon-abilities"),
+        moves: byId("pokemon-moves"),
+        moveCount: byId("pokemon-move-count"),
         search: byId("pokemon-search"),
         form: byId("search-form"),
         error: byId("error-message"),
@@ -57,6 +59,7 @@
 
     let currentId = 1;
     let requestNumber = 0;
+    let activeController = null;
     let imageOptions = [];
     let catalogEntries = [];
 
@@ -136,6 +139,13 @@
             badge.textContent = ability.name.replaceAll("-", " ") + (is_hidden ? " (oculta)" : "");
             return badge;
         }));
+        ui.moveCount.textContent = `${pokemon.moves.length} movimientos`;
+        ui.moves.replaceChildren(...pokemon.moves.map(({ move }) => {
+            const badge = document.createElement("span");
+            badge.className = "badge move-badge";
+            badge.textContent = move.name.replaceAll("-", " ");
+            return badge;
+        }));
 
         ui.catalog.querySelectorAll("[data-pokemon-id]").forEach((entry) => {
             entry.classList.toggle("is-current", Number(entry.dataset.pokemonId) === pokemon.id);
@@ -144,11 +154,7 @@
 
     async function loadSpecies(url, currentRequest, signal) {
         try {
-            const response = await fetch(url, { signal });
-            if (!response.ok) {
-                throw new Error(`La PokéAPI respondió con un error (${response.status}).`);
-            }
-            const species = await response.json();
+            const species = await getPokemonSpecies(url, signal);
             if (currentRequest !== requestNumber) return;
             const genus = species.genera.find(({ language }) => language.name === "es")
                 || species.genera.find(({ language }) => language.name === "en");
@@ -207,11 +213,7 @@
 
     async function loadCatalog() {
         try {
-            const response = await fetch(catalogUrl);
-            if (!response.ok) {
-                throw new Error(`La PokéAPI respondió con un error (${response.status}).`);
-            }
-            const data = await response.json();
+            const data = await getAllPokemons();
             catalogEntries = data.results.map(({ name }, index) => ({ id: index + 1, name }));
             ui.catalogStatus.textContent = "";
             renderCatalog(ui.catalogSearch.value);
@@ -224,13 +226,24 @@
 
     async function loadPokemon(query) {
         const currentRequest = ++requestNumber;
+        activeController?.abort();
         const controller = new AbortController();
+        activeController = controller;
         const timeout = window.setTimeout(() => controller.abort(), 12000);
         ui.error.hidden = true;
         ui.loading.textContent = "Cargando Pokémon...";
         ui.loading.hidden = false;
         ui.image.hidden = true;
         ui.name.textContent = "Cargando...";
+        ui.types.replaceChildren();
+        ui.species.textContent = "Cargando...";
+        ui.description.textContent = "Cargando registro de la Pokédex...";
+        ui.stats.replaceChildren();
+        ui.abilities.replaceChildren();
+        ui.moves.replaceChildren();
+        ui.moveCount.textContent = "";
+        ui.height.textContent = "—";
+        ui.weight.textContent = "—";
         ui.previous.disabled = true;
         ui.next.disabled = true;
         document.querySelectorAll(".dpad button").forEach((button) => {
@@ -238,17 +251,7 @@
         });
 
         try {
-            const response = await fetch(`${apiUrl}${encodeURIComponent(query)}`, {
-                signal: controller.signal
-            });
-            if (response.status === 404) {
-                throw new Error("No se encontró ese Pokémon. Prueba con su nombre en inglés o número.");
-            }
-            if (!response.ok) {
-                throw new Error(`La PokéAPI respondió con un error (${response.status}).`);
-            }
-
-            const pokemon = await response.json();
+            const pokemon = await getPokemonById(query, controller.signal);
             if (currentRequest === requestNumber) {
                 renderPokemon(pokemon);
                 void loadSpecies(pokemon.species.url, currentRequest, controller.signal);
@@ -268,6 +271,8 @@
             ui.description.textContent = "Registro oficial no disponible.";
             ui.stats.replaceChildren();
             ui.abilities.replaceChildren();
+            ui.moves.replaceChildren();
+            ui.moveCount.textContent = "";
             ui.height.textContent = "—";
             ui.weight.textContent = "—";
             ui.error.textContent = ui.loading.textContent;
@@ -275,6 +280,7 @@
         } finally {
             window.clearTimeout(timeout);
             if (currentRequest === requestNumber) {
+                activeController = null;
                 ui.previous.disabled = false;
                 ui.next.disabled = false;
                 document.querySelectorAll(".dpad button").forEach((button) => {

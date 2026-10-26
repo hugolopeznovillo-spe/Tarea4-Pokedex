@@ -48,8 +48,8 @@
         </form>
         <p id="error-message" class="error-message mb-2 p-2 bg-dark" role="alert" hidden></p>
 
-        <section id="pokedex" class="pokedex-card row g-3 p-3" aria-label="Pokédex">
-            <article class="console-panel col-12 col-lg-6 d-flex flex-column p-3" aria-label="Consola Pokédex">
+        <section id="pokedex" class="pokedex-card row g-0 p-0" aria-label="Pokédex">
+            <article class="console-panel col-12 col-lg-5 d-flex flex-column p-3 p-xl-4" aria-label="Consola Pokédex">
                 <div class="console-status d-flex align-items-center gap-3 mb-3" aria-hidden="true">
                     <span class="camera-lens"></span>
                     <span class="indicator-lights"><i></i><i></i><i></i></span>
@@ -82,7 +82,7 @@
                 <p class="keyboard-hint mt-2 mb-0 text-center">← / ↑ anterior · siguiente → / ↓</p>
             </article>
 
-            <aside id="pokemon-details" class="details-side col-12 col-lg-6 d-flex flex-column gap-3 p-3" aria-label="Datos del Pokémon">
+            <aside id="pokemon-details" class="details-side col-12 col-lg-7 d-flex flex-column gap-3 p-3 p-xl-4" aria-label="Datos del Pokémon">
                 <div class="details-card p-3 bg-dark">
                     <div class="pokemon-heading d-flex align-items-center justify-content-between gap-3 mb-3">
                         <h2 id="pokemon-name" class="fw-bold text-uppercase">Cargando...</h2>
@@ -101,6 +101,11 @@
                     <div id="pokemon-stats" class="stats-list d-flex flex-column gap-1" aria-live="polite"></div>
                     <h3 class="section-title mt-3 mb-2 text-success">Habilidades</h3>
                     <div id="pokemon-abilities" class="abilities d-flex flex-wrap gap-2"></div>
+                    <div class="moves-heading d-flex align-items-center justify-content-between gap-2 mt-3 mb-2">
+                        <h3 class="section-title mb-0 text-success">Movimientos</h3>
+                        <span id="pokemon-move-count" class="move-count"></span>
+                    </div>
+                    <div id="pokemon-moves" class="moves-list d-flex flex-wrap gap-2" aria-live="polite"></div>
                 </div>
                 <section class="catalog-section p-3 bg-dark" aria-labelledby="catalog-heading">
                     <div class="catalog-heading d-flex align-items-center justify-content-between gap-2 mb-2">
@@ -116,6 +121,6 @@
         </section>
         <footer>Datos de <a href="https://pokeapi.co/">PokéAPI</a></footer>
     </main>
-    <script src="./scripts.js" defer></script>
+    <script type="module" src="./scripts.js"></script>
 </body>
 </html>
